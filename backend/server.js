@@ -235,9 +235,19 @@ async function startServer() {
       console.log(`ShareMeal server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("MongoDB connection failed:", error);
-    process.exit(1);
-  }
-}
+  console.error("MongoDB connection failed:", error.message);
 
+  if (error.reason?.servers) {
+    for (const [address, server] of error.reason.servers) {
+      console.error("MongoDB server:", address);
+      console.error(
+        "Server error:",
+        server.error?.message || "No detailed error available"
+      );
+    }
+  }
+
+  process.exit(1);
+}
+}
 startServer();
