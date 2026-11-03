@@ -33,6 +33,7 @@ const getTimeLeft = (deadline) => {
   return `${hours} hr ${minutes} min left`;
 };
 
+
 const getFoodImage = (category) => {
   const images = {
     Meals:
@@ -51,6 +52,7 @@ const getFoodImage = (category) => {
 
   return images[category] || images.Others;
 };
+
 
 function App() {
   const [foods, setFoods] = useState([]);
