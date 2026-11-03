@@ -1,21 +1,25 @@
 
-const authMiddleware = require("./middleware/authMiddleware");
 const dns = require("node:dns");
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
+require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-require("dotenv").config();
 
+const authMiddleware = require("./middleware/authMiddleware");
 const FoodDonation = require("./models/FoodDonation");
 const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
+
+// Routes
 app.use("/api/auth", authRoutes);
 
 // Home route
@@ -36,7 +40,6 @@ app.get("/api/health", (req, res) => {
 });
 
 // Get all food donations
-
 app.get("/api/donations", async (req, res) => {
   try {
     // Mark overdue available donations as expired
@@ -61,9 +64,7 @@ app.get("/api/donations", async (req, res) => {
   }
 });
 
-
 // Add a food donation
-
 app.post("/api/donations", authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== "donor") {
@@ -98,9 +99,7 @@ app.post("/api/donations", authMiddleware, async (req, res) => {
   }
 });
 
-
 // Update donation status
-
 app.patch("/api/donations/:id", authMiddleware, async (req, res) => {
   try {
     const donation = await FoodDonation.findById(req.params.id);
@@ -120,19 +119,19 @@ app.patch("/api/donations/:id", authMiddleware, async (req, res) => {
       }
 
       if (donation.pickupDeadline <= new Date()) {
-  donation.status = "Expired";
-  await donation.save();
+        donation.status = "Expired";
+        await donation.save();
 
-  return res.status(400).json({
-    message: "This food donation has expired",
-  });
-}
+        return res.status(400).json({
+          message: "This food donation has expired",
+        });
+      }
 
-if (donation.status !== "Available") {
-  return res.status(400).json({
-    message: "This food is not available",
-  });
-}
+      if (donation.status !== "Available") {
+        return res.status(400).json({
+          message: "This food is not available",
+        });
+      }
 
       donation.status = "Reserved";
       donation.reservedBy = req.user.userId;
@@ -157,14 +156,13 @@ if (donation.status !== "Available") {
         donation.reservedBy.toString() !== req.user.userId
       ) {
         return res.status(403).json({
-          message: "Only the receiver who reserved this food can collect it",
+          message:
+            "Only the receiver who reserved this food can collect it",
         });
       }
 
       donation.status = "Collected";
-    }
-
-    else {
+    } else {
       return res.status(400).json({
         message: "Invalid status transition",
       });
@@ -178,7 +176,7 @@ if (donation.status !== "Available") {
   }
 });
 
-
+// Delete a food donation
 app.delete("/api/donations/:id", authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== "donor") {
@@ -220,23 +218,25 @@ app.delete("/api/donations/:id", authMiddleware, async (req, res) => {
   }
 });
 
-
 // Start server after connecting to MongoDB
 async function startServer() {
   try {
     if (!process.env.MONGODB_URI) {
-      throw new Error("MONGODB_URI is missing from .env");
+      throw new Error(
+        "MONGODB_URI is missing from Render environment variables"
+      );
     }
 
     await mongoose.connect(process.env.MONGODB_URI);
 
     console.log("MongoDB connected successfully!");
 
-    app.listen(PORT, () => {
-      console.log(`ShareMeal server running at http://localhost:${PORT}`);
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`ShareMeal server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("MongoDB connection failed:", error.message);
+    console.error("MongoDB connection failed:", error);
+    process.exit(1);
   }
 }
 
