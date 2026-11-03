@@ -665,10 +665,15 @@ function App() {
                 <article className="food-card" key={food._id}>
                   <div className="food-image">
                     <img
-                      className="food-photo"
-                      src={getFoodImage(food.category)}
-                      alt={food.foodName}
-                    />
+  className="food-photo"
+  src={getFoodImage(food.category)}
+  alt=""
+  onError={(e) => {
+    e.currentTarget.onerror = null;
+    e.currentTarget.src =
+      "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=700";
+  }}
+/>
                     <span className="available-badge">
                       {food.status || "Available"}
                     </span>
